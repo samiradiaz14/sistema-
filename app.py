@@ -16,13 +16,10 @@ st.set_page_config(
 # --- ESTILO TEMA OSCURO PREMIUM (CSS NATIVO CORREGIDO) ---
 st.markdown("""
     <style>
-    /* Estilo General */
     .stApp {
         background-color: #0E1117;
         color: #E0E0E0;
     }
-    
-    /* Textos en Sidebar */
     section[data-testid="stSidebar"] {
         background-color: #161B22;
         border-right: 1px solid #30363D;
@@ -33,8 +30,6 @@ st.markdown("""
     section[data-testid="stSidebar"] label {
         color: #C9D1D9 !important;
     }
-    
-    /* Carga de Archivos (File Uploader) */
     div[data-testid="stFileUploader"] {
         background-color: #1F242D;
         border: 1px dashed #484F58;
@@ -47,8 +42,6 @@ st.markdown("""
     div[data-testid="stFileUploader"] span, div[data-testid="stFileUploader"] button {
         color: #E0E0E0 !important;
     }
-
-    /* Tarjetas de Métricas */
     [data-testid="stMetric"] {
         background-color: #161B22;
         border: 1px solid #30363D;
@@ -65,8 +58,6 @@ st.markdown("""
         color: #58A6FF !important;
         font-weight: 700;
     }
-
-    /* Pestañas (Tabs) */
     .stTabs [data-baseweb="tab-list"] {
         gap: 10px;
         background-color: #161B22;
@@ -84,8 +75,6 @@ st.markdown("""
         background-color: #238636 !important;
         color: #FFFFFF !important;
     }
-
-    /* Tablas de Datos (DataFrames) */
     [data-testid="stDataFrame"] {
         background-color: #161B22;
         border: 1px solid #30363D;
@@ -96,17 +85,14 @@ st.markdown("""
 
 DB_NAME = "fundacion.db"
 
-# --- HISTORIAL EN STATE DE STREAMLIT ---
 if "historial_consultas" not in st.session_state:
     st.session_state.historial_consultas = []
 
-# --- HELPER DE CONEXIÓN A BASE DE DATOS ---
 def get_db_connection():
     conn = sqlite3.connect(DB_NAME, check_same_thread=False)
     conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
-# --- REGLAS Y DICCIONARIO DE EQUIVALENCIAS ---
 DICCIONARIO_LOCACIONES = {
     "prof park": "Parque",
     "park": "Parque",
@@ -129,7 +115,6 @@ def limpiar_monto(val):
         return 0.0
     if isinstance(val, (int, float)):
         return float(val)
-    
     raw_monto = str(val).replace("$", "").replace(",", "").strip()
     parts = raw_monto.split(".")
     if len(parts) == 2 and len(parts[1]) == 3:
@@ -143,6 +128,24 @@ def limpiar_texto(texto):
     if pd.isna(texto) or str(texto).lower().strip() in ["nan", "none", "null", ""]:
         return ""
     return str(texto).strip()
+
+def limpiar_fecha(val):
+    """Parsea fechas y descarta errores de captura fuera del rango operativo (2023-2027)."""
+    fecha = pd.to_datetime(val, errors='coerce')
+    if pd.notnull(fecha) and (2023 <= fecha.year <= 2027):
+        return fecha
+    return pd.NaT
+
+def aplicar_estilo_plotly(fig):
+    """Fuerza fondo transparente y tipografía legible en tema oscuro."""
+    fig.update_layout(
+        template="plotly_dark",
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        font=dict(color="#E0E0E0"),
+        margin=dict(t=40, b=30, l=20, r=20)
+    )
+    return fig
 
 # --- MODELO RELACIONAL ---
 def inicializar_db():
@@ -231,15 +234,15 @@ def procesar_excel(file):
                     email = limpiar_texto(row.get("email"))
                     nombre = limpiar_texto(row.get("name") or row.get("nombre"))
                     apellido = limpiar_texto(row.get("last name") or row.get("apellido"))
-                    direccion = limpiar_texto(row.get("home address") or row.get("address"))
-                    fecha = pd.to_datetime(row.get(col_fecha_visita), errors='coerce')
+                    direccion = limpiar_texto(row.get("home address") or row.get("home adress") or row.get("address"))
+                    fecha = limpiar_fecha(row.get(col_fecha_visita))
                     cuarto = limpiar_texto(row.get("room number") or row.get("cuarto") or row.get("room"))
                     
                     if pd.notnull(fecha) and (email or nombre or apellido):
                         id_p = obtener_o_crear_persona(cursor, email, nombre, apellido, direccion)
                         cursor.execute(
                             "INSERT INTO visitas (id_persona, fecha_visita, cuarto, locacion, origen) VALUES (?, ?, ?, ?, ?)",
-                            (id_p, fecha.strftime('%Y-%m-%d'), cuarto, locacion_cat, sheet_name)
+                            (id_p, fecha.strftime('%Y-%m-%d'), cuarto, locacion_cat, sheet_name.strip())
                         )
                         
             if col_fecha_donacion:
@@ -248,15 +251,15 @@ def procesar_excel(file):
                     email = limpiar_texto(row.get("email"))
                     nombre = limpiar_texto(row.get("name") or row.get("nombre"))
                     apellido = limpiar_texto(row.get("last name") or row.get("apellido"))
-                    direccion = limpiar_texto(row.get("home address") or row.get("address"))
-                    fecha = pd.to_datetime(row.get(col_fecha_donacion), errors='coerce')
+                    direccion = limpiar_texto(row.get("home address") or row.get("home adress") or row.get("address"))
+                    fecha = limpiar_fecha(row.get(col_fecha_donacion))
                     monto_val = limpiar_monto(row.get(col_monto)) if col_monto else 0.0
                     
                     if pd.notnull(fecha) and (email or nombre or apellido):
                         id_p = obtener_o_crear_persona(cursor, email, nombre, apellido, direccion)
                         cursor.execute(
                             "INSERT INTO donaciones (id_persona, monto, fecha_donacion, origen) VALUES (?, ?, ?, ?)",
-                            (id_p, monto_val, fecha.strftime('%Y-%m-%d'), sheet_name)
+                            (id_p, monto_val, fecha.strftime('%Y-%m-%d'), sheet_name.strip())
                         )
         conn.commit()
 
@@ -397,8 +400,8 @@ with tab_persona:
             st.markdown("### Donaciones Registradas")
             if not donaciones_df.empty:
                 st.dataframe(donaciones_df[["fecha_donacion", "monto", "origen"]].style.format({"monto": "${:,.2f}"}), use_container_width=True, hide_index=True)
-                fig_don = px.bar(donaciones_df, x="fecha_donacion", y="monto", title="Historial de Donaciones por Fecha", template="plotly_dark")
-                st.plotly_chart(fig_don, use_container_width=True)
+                fig_don = px.bar(donaciones_df, x="fecha_donacion", y="monto", title="Historial de Donaciones por Fecha", text_auto="$.2s")
+                st.plotly_chart(aplicar_estilo_plotly(fig_don), use_container_width=True)
             else:
                 st.info("Sin registros de donaciones.")
 
@@ -415,42 +418,141 @@ with tab_graficas:
     all_visitas = pd.read_sql_query("SELECT * FROM visitas", conn)
     
     if not all_donaciones.empty or not all_visitas.empty:
+        # --- FILA SUPERIOR: INDICADORES CLAVE DE RENDIMIENTO (KPIs) ---
+        don_efectivas = all_donaciones[all_donaciones["monto"] > 0] if not all_donaciones.empty else pd.DataFrame()
+        recaudo_total = don_efectivas["monto"].sum() if not don_efectivas.empty else 0.0
+        ticket_prom = don_efectivas["monto"].mean() if not don_efectivas.empty else 0.0
+        ticket_mediana = don_efectivas["monto"].median() if not don_efectivas.empty else 0.0
+        donacion_max = don_efectivas["monto"].max() if not don_efectivas.empty else 0.0
+
+        # Conversión: visitantes únicos que también han donado
+        visitantes_unicos = set(all_visitas["id_persona"].unique()) if not all_visitas.empty else set()
+        donantes_unicos = set(don_efectivas["id_persona"].unique()) if not don_efectivas.empty else set()
+        convertidos = len(visitantes_unicos.intersection(donantes_unicos))
+        tasa_conv = (convertidos / len(visitantes_unicos) * 100) if visitantes_unicos else 0.0
+
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        kpi1.metric("Recaudo Total", f"${recaudo_total:,.0f}", f"{len(don_efectivas)} aportes efectivos")
+        kpi2.metric("Ticket Promedio", f"${ticket_prom:,.0f}", f"Mediana: ${ticket_mediana:,.0f}")
+        kpi3.metric("Aporte Máximo", f"${donacion_max:,.0f}", f"{len(donantes_unicos)} donantes únicos")
+        kpi4.metric("Conversión Visitante ➔ Donante", f"{tasa_conv:.1f}%", f"{convertidos} de {len(visitantes_unicos)} visitantes")
+
+        st.divider()
         col_g1, col_g2 = st.columns(2)
         
+        # --- GRÁFICA 1: DONA DE VISITAS CON TOTAL EN EL CENTRO ---
         with col_g1:
             if not all_visitas.empty:
                 st.markdown("#### Distribución de Visitas por Locación")
                 loc_counts = all_visitas["locacion"].value_counts().reset_index()
                 loc_counts.columns = ["Locación", "Cantidad"]
-                fig_pie = px.pie(loc_counts, names="Locación", values="Cantidad", hole=0.4, template="plotly_dark", color_discrete_sequence=px.colors.qualitative.Pastel)
-                st.plotly_chart(fig_pie, use_container_width=True)
+                fig_pie = px.pie(
+                    loc_counts, names="Locación", values="Cantidad", hole=0.5,
+                    color_discrete_sequence=["#58A6FF", "#F2CC60"]
+                )
+                fig_pie.update_traces(
+                    textinfo="percent+value",
+                    texttemplate="%{percent:.1%}<br>(%{value} visitas)",
+                    hovertemplate="<b>%{label}</b><br>Visitas: %{value}<br>Porcentaje: %{percent:.1%}<extra></extra>"
+                )
+                fig_pie.add_annotation(
+                    text=f"<b>{len(all_visitas)}</b><br>Visitas",
+                    x=0.5, y=0.5, font_size=16, showarrow=False, font_color="#E0E0E0"
+                )
+                st.plotly_chart(aplicar_estilo_plotly(fig_pie), use_container_width=True)
 
+        # --- GRÁFICA 2: EVOLUCIÓN MENSUAL LIMPIA CON PROMEDIO Y ETIQUETAS ---
         with col_g2:
-            if not all_donaciones.empty:
+            if not don_efectivas.empty:
                 st.markdown("#### Evolución Mensual del Recaudo ($)")
-                all_donaciones["fecha_donacion"] = pd.to_datetime(all_donaciones["fecha_donacion"])
-                # CORRECCIÓN APLICADA AQUÍ: 'ME' en lugar de 'M'
-                don_mensual = all_donaciones.resample("ME", on="fecha_donacion")["monto"].sum().reset_index()
-                fig_line = px.line(don_mensual, x="fecha_donacion", y="monto", markers=True, template="plotly_dark", labels={"fecha_donacion": "Mes", "monto": "Monto Total ($)"})
-                fig_line.update_traces(line_color="#238636", line_width=3)
-                st.plotly_chart(fig_line, use_container_width=True)
+                df_evol = don_efectivas.copy()
+                df_evol["fecha_donacion"] = pd.to_datetime(df_evol["fecha_donacion"])
+                # Filtrar fechas válidas (2024 en adelante) para evitar ejes distorsionados
+                df_evol = df_evol[df_evol["fecha_donacion"] >= "2024-01-01"]
+                
+                don_mensual = df_evol.resample("ME", on="fecha_donacion").agg(
+                    monto=("monto", "sum"),
+                    aportes=("monto", "count")
+                ).reset_index()
+                don_mensual["mes_str"] = don_mensual["fecha_donacion"].dt.strftime("%Y-%m")
+                prom_mensual = don_mensual["monto"].mean()
+
+                fig_line = go.Figure()
+                fig_line.add_trace(go.Scatter(
+                    x=don_mensual["mes_str"],
+                    y=don_mensual["monto"],
+                    mode="lines+markers",
+                    name="Recaudo Mensual",
+                    line=dict(color="#238636", width=3),
+                    marker=dict(size=8, color="#3FB950"),
+                    customdata=don_mensual["aportes"],
+                    hovertemplate="<b>Mes: %{x}</b><br>Recaudo: $%{y:,.0f}<br>Aportes: %{customdata}<extra></extra>"
+                ))
+                fig_line.add_hline(
+                    y=prom_mensual, line_dash="dash", line_color="#F0883E",
+                    annotation_text=f"Promedio mensual: ${prom_mensual:,.0f}",
+                    annotation_position="top left",
+                    annotation_font_color="#F0883E"
+                )
+                fig_line.update_layout(xaxis_title="Mes", yaxis_title="Recaudo Total ($)", showlegend=False)
+                st.plotly_chart(aplicar_estilo_plotly(fig_line), use_container_width=True)
 
         st.divider()
         col_g3, col_g4 = st.columns(2)
         
+        # --- GRÁFICA 3: SEGMENTACIÓN POR RANGOS DE DONACIÓN (CANTIDAD VS MONTO TOTAL) ---
         with col_g3:
-            if not all_donaciones.empty:
-                st.markdown("#### Distribución de Montos de Donación")
-                fig_hist = px.histogram(all_donaciones, x="monto", nbins=15, title="Frecuencia según Montos ($)", template="plotly_dark", color_discrete_sequence=["#58A6FF"])
-                st.plotly_chart(fig_hist, use_container_width=True)
+            if not don_efectivas.empty:
+                st.markdown("#### Segmentación por Nivel de Aporte (Tiers)")
+                bins = [0, 100, 500, 1000, 5000, 15000, float('inf')]
+                labels = ['$1 - $100', '$101 - $500', '$501 - $1k', '$1k - $5k', '$5k - $15k', '+$15k']
+                df_tiers = don_efectivas.copy()
+                df_tiers["Rango"] = pd.cut(df_tiers["monto"], bins=bins, labels=labels)
+                
+                resumen_tiers = df_tiers.groupby("Rango", observed=False).agg(
+                    Cantidad=("monto", "count"),
+                    Total_Recaudado=("monto", "sum")
+                ).reset_index()
 
+                fig_tiers = px.bar(
+                    resumen_tiers, x="Rango", y="Cantidad",
+                    text="Cantidad",
+                    custom_data=["Total_Recaudado"],
+                    color="Total_Recaudado",
+                    color_continuous_scale="Blues",
+                    labels={"Cantidad": "Nº de Donaciones", "Total_Recaudado": "Recaudado ($)"}
+                )
+                fig_tiers.update_traces(
+                    textposition="outside",
+                    hovertemplate="<b>Rango: %{x}</b><br>Nº Donaciones: %{y}<br>Total Recaudado: $%{customdata[0]:,.0f}<extra></extra>"
+                )
+                fig_tiers.update_layout(coloraxis_showscale=False, yaxis_title="Cantidad de Aportes")
+                st.plotly_chart(aplicar_estilo_plotly(fig_tiers), use_container_width=True)
+                st.caption(f"💡 Mientras el 50% de los aportes son ≤ **${ticket_mediana:,.0f}** (mediana), los aportes **+$15k** concentran la mayor parte del capital.")
+
+        # --- GRÁFICA 4: VISITAS POR PESTAÑA ORDENADAS CON VALORES EXACTOS ---
         with col_g4:
             if not all_visitas.empty:
                 st.markdown("#### Visitas por Pestaña de Origen (Excel)")
                 origen_counts = all_visitas["origen"].value_counts().reset_index()
                 origen_counts.columns = ["Origen", "Visitas"]
-                fig_bar = px.bar(origen_counts, x="Visitas", y="Origen", orientation="h", template="plotly_dark", color="Visitas", color_continuous_scale="Viridis")
-                st.plotly_chart(fig_bar, use_container_width=True)
+                origen_counts = origen_counts.sort_values("Visitas", ascending=True)
+                origen_counts["Pct"] = (origen_counts["Visitas"] / origen_counts["Visitas"].sum() * 100).round(1)
+
+                fig_bar = px.bar(
+                    origen_counts, x="Visitas", y="Origen", orientation="h",
+                    text=origen_counts.apply(lambda r: f"{r['Visitas']} ({r['Pct']}%)", axis=1),
+                    color="Visitas", color_continuous_scale="Tealgrn"
+                )
+                fig_bar.update_traces(
+                    textposition="outside",
+                    hovertemplate="<b>%{y}</b><br>Visitas: %{x}<extra></extra>"
+                )
+                fig_bar.update_layout(
+                    coloraxis_showscale=False,
+                    xaxis=dict(range=[0, origen_counts["Visitas"].max() * 1.25])
+                )
+                st.plotly_chart(aplicar_estilo_plotly(fig_bar), use_container_width=True)
     else:
         st.info("Carga un archivo Excel para activar los tableros interactivos.")
 
