@@ -7,79 +7,105 @@ import plotly.graph_objects as go
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(
-    page_title="Dashboard Analítico - Fundación",
-    page_icon="📊",
+    page_title="Dashboard Analítico - Fundación La Puerta",
+    page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- ESTILO TEMA OSCURO PREMIUM (CSS NATIVO CORREGIDO) ---
-st.markdown("""
+# --- PALETA DE COLORES (INSPIRADA EN FUNDACIÓN LA PUERTA) ---
+COLOR_BG_PRINCIPAL = "#EAE6DF"   # Crema / Arena del fondo
+COLOR_BG_TARJETA   = "#F5F3EE"   # Crema claro para tarjetas y sidebar
+COLOR_VERDE_OSCURO = "#455342"   # Verde bosque del logo y texto
+COLOR_VERDE_MEDIO  = "#62735E"   # Verde secundario para hovers/gráficas
+COLOR_AMBAR        = "#DF9343"   # Naranja bellota (acento)
+COLOR_BORDE        = "#D3CCC0"   # Borde suave tono tierra
+COLOR_TEXTO_SEC    = "#6B7068"   # Gris verdoso para etiquetas secundarias
+
+# --- ESTILO TEMA ORGÁNICO CÁLIDO (CSS NATIVO) ---
+st.markdown(f"""
     <style>
-    .stApp {
-        background-color: #0E1117;
-        color: #E0E0E0;
-    }
-    section[data-testid="stSidebar"] {
-        background-color: #161B22;
-        border-right: 1px solid #30363D;
-    }
+    .stApp {{
+        background-color: {COLOR_BG_PRINCIPAL};
+        color: {COLOR_VERDE_OSCURO};
+    }}
+    h1, h2, h3, h4, h5, h6 {{
+        color: {COLOR_VERDE_OSCURO} !important;
+    }}
+    section[data-testid="stSidebar"] {{
+        background-color: {COLOR_BG_TARJETA};
+        border-right: 1px solid {COLOR_BORDE};
+    }}
     section[data-testid="stSidebar"] p, 
     section[data-testid="stSidebar"] span, 
     section[data-testid="stSidebar"] div,
-    section[data-testid="stSidebar"] label {
-        color: #C9D1D9 !important;
-    }
-    div[data-testid="stFileUploader"] {
-        background-color: #1F242D;
-        border: 1px dashed #484F58;
+    section[data-testid="stSidebar"] label {{
+        color: {COLOR_VERDE_OSCURO} !important;
+    }}
+    div[data-testid="stFileUploader"] {{
+        background-color: {COLOR_BG_PRINCIPAL};
+        border: 1.5px dashed {COLOR_VERDE_OSCURO};
         border-radius: 8px;
         padding: 10px;
-    }
-    div[data-testid="stFileUploader"] section {
-        background-color: #1F242D !important;
-    }
-    div[data-testid="stFileUploader"] span, div[data-testid="stFileUploader"] button {
-        color: #E0E0E0 !important;
-    }
-    [data-testid="stMetric"] {
-        background-color: #161B22;
-        border: 1px solid #30363D;
+    }}
+    div[data-testid="stFileUploader"] section {{
+        background-color: {COLOR_BG_PRINCIPAL} !important;
+    }}
+    div[data-testid="stFileUploader"] span, 
+    div[data-testid="stFileUploader"] button {{
+        color: {COLOR_VERDE_OSCURO} !important;
+    }}
+    [data-testid="stMetric"] {{
+        background-color: {COLOR_BG_TARJETA};
+        border: 1px solid {COLOR_BORDE};
+        border-left: 4px solid {COLOR_VERDE_OSCURO};
         border-radius: 10px;
         padding: 14px 20px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    }
-    [data-testid="stMetricLabel"] {
-        color: #8B949E !important;
+        box-shadow: 0 3px 8px rgba(69, 83, 66, 0.08);
+    }}
+    [data-testid="stMetricLabel"] {{
+        color: {COLOR_TEXTO_SEC} !important;
         font-size: 0.9rem !important;
         font-weight: 600;
-    }
-    [data-testid="stMetricValue"] {
-        color: #58A6FF !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {COLOR_VERDE_OSCURO} !important;
         font-weight: 700;
-    }
-    .stTabs [data-baseweb="tab-list"] {
+    }}
+    [data-testid="stMetricDelta"] svg {{
+        fill: {COLOR_AMBAR} !important;
+    }}
+    .stTabs [data-baseweb="tab-list"] {{
         gap: 10px;
-        background-color: #161B22;
+        background-color: {COLOR_BG_TARJETA};
         padding: 8px;
         border-radius: 10px;
-        border: 1px solid #30363D;
-    }
-    .stTabs [data-baseweb="tab"] {
-        color: #8B949E !important;
+        border: 1px solid {COLOR_BORDE};
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        color: {COLOR_VERDE_OSCURO} !important;
         border-radius: 6px;
         padding: 8px 20px;
         font-weight: 600;
-    }
-    .stTabs [aria-selected="true"] {
-        background-color: #238636 !important;
+        background-color: transparent;
+    }}
+    .stTabs [aria-selected="true"] {{
+        background-color: {COLOR_VERDE_OSCURO} !important;
         color: #FFFFFF !important;
-    }
-    [data-testid="stDataFrame"] {
-        background-color: #161B22;
-        border: 1px solid #30363D;
+    }}
+    [data-testid="stDataFrame"] {{
+        background-color: {COLOR_BG_TARJETA};
+        border: 1px solid {COLOR_BORDE};
         border-radius: 8px;
-    }
+    }}
+    div[data-baseweb="select"] > div {{
+        background-color: {COLOR_BG_TARJETA} !important;
+        border-color: {COLOR_BORDE} !important;
+        color: {COLOR_VERDE_OSCURO} !important;
+    }}
+    hr {{
+        border-color: {COLOR_BORDE} !important;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -137,12 +163,15 @@ def limpiar_fecha(val):
     return pd.NaT
 
 def aplicar_estilo_plotly(fig):
-    """Fuerza fondo transparente y tipografía legible en tema oscuro."""
+    """Fuerza fondo transparente y tipografía verde bosque en tema claro."""
     fig.update_layout(
-        template="plotly_dark",
+        template="plotly_white",
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
-        font=dict(color="#E0E0E0"),
+        font=dict(color=COLOR_VERDE_OSCURO),
+        title_font=dict(color=COLOR_VERDE_OSCURO),
+        xaxis=dict(gridcolor=COLOR_BORDE, zerolinecolor=COLOR_BORDE),
+        yaxis=dict(gridcolor=COLOR_BORDE, zerolinecolor=COLOR_BORDE),
         margin=dict(t=40, b=30, l=20, r=20)
     )
     return fig
@@ -303,7 +332,7 @@ inicializar_db()
 # --- BARRA LATERAL ---
 with st.sidebar:
     st.title("Gestión de Datos")
-    st.caption("Carga y administración del sistema")
+    st.caption("Fundación La Puerta Voluntarios")
     
     archivo = st.file_uploader("Cargar Excel (.xlsx)", type=["xlsx"])
     if archivo:
@@ -332,7 +361,7 @@ with st.sidebar:
     st.metric("Donaciones Registradas", total_d)
 
 # --- INTERFAZ PRINCIPAL ---
-st.title("Plataforma de Analítica - Fundación")
+st.title("Plataforma de Analítica - Fundación La Puerta")
 
 tab_persona, tab_graficas, tab_rankings = st.tabs([
     "Consulta por Persona", 
@@ -400,7 +429,11 @@ with tab_persona:
             st.markdown("### Donaciones Registradas")
             if not donaciones_df.empty:
                 st.dataframe(donaciones_df[["fecha_donacion", "monto", "origen"]].style.format({"monto": "${:,.2f}"}), use_container_width=True, hide_index=True)
-                fig_don = px.bar(donaciones_df, x="fecha_donacion", y="monto", title="Historial de Donaciones por Fecha", text_auto="$.2s")
+                fig_don = px.bar(
+                    donaciones_df, x="fecha_donacion", y="monto", 
+                    title="Historial de Donaciones por Fecha", text_auto="$.2s",
+                    color_discrete_sequence=[COLOR_VERDE_OSCURO]
+                )
                 st.plotly_chart(aplicar_estilo_plotly(fig_don), use_container_width=True)
             else:
                 st.info("Sin registros de donaciones.")
@@ -414,18 +447,21 @@ with tab_persona:
 with tab_graficas:
     st.markdown("### Tableros Visuales y Tendencias Globales")
     
-    all_donaciones = pd.read_sql_query("SELECT * FROM donaciones", conn)
+    all_donaciones = pd.read_sql_query("""
+        SELECT d.*, COALESCE(NULLIF(TRIM(p.nombre || ' ' || p.apellido), ''), p.email, 'Anónimo') AS donante
+        FROM donaciones d
+        LEFT JOIN personas p ON d.id_persona = p.id_persona
+    """, conn)
     all_visitas = pd.read_sql_query("SELECT * FROM visitas", conn)
     
     if not all_donaciones.empty or not all_visitas.empty:
         # --- FILA SUPERIOR: INDICADORES CLAVE DE RENDIMIENTO (KPIs) ---
-        don_efectivas = all_donaciones[all_donaciones["monto"] > 0] if not all_donaciones.empty else pd.DataFrame()
+        don_efectivas = all_donaciones[all_donaciones["monto"] > 0].copy() if not all_donaciones.empty else pd.DataFrame()
         recaudo_total = don_efectivas["monto"].sum() if not don_efectivas.empty else 0.0
         ticket_prom = don_efectivas["monto"].mean() if not don_efectivas.empty else 0.0
         ticket_mediana = don_efectivas["monto"].median() if not don_efectivas.empty else 0.0
         donacion_max = don_efectivas["monto"].max() if not don_efectivas.empty else 0.0
 
-        # Conversión: visitantes únicos que también han donado
         visitantes_unicos = set(all_visitas["id_persona"].unique()) if not all_visitas.empty else set()
         donantes_unicos = set(don_efectivas["id_persona"].unique()) if not don_efectivas.empty else set()
         convertidos = len(visitantes_unicos.intersection(donantes_unicos))
@@ -440,7 +476,7 @@ with tab_graficas:
         st.divider()
         col_g1, col_g2 = st.columns(2)
         
-        # --- GRÁFICA 1: DONA DE VISITAS CON TOTAL EN EL CENTRO ---
+        # --- GRÁFICA 1: DONA DE VISITAS ---
         with col_g1:
             if not all_visitas.empty:
                 st.markdown("#### Distribución de Visitas por Locación")
@@ -448,7 +484,7 @@ with tab_graficas:
                 loc_counts.columns = ["Locación", "Cantidad"]
                 fig_pie = px.pie(
                     loc_counts, names="Locación", values="Cantidad", hole=0.5,
-                    color_discrete_sequence=["#58A6FF", "#F2CC60"]
+                    color_discrete_sequence=[COLOR_VERDE_OSCURO, COLOR_AMBAR]
                 )
                 fig_pie.update_traces(
                     textinfo="percent+value",
@@ -457,17 +493,16 @@ with tab_graficas:
                 )
                 fig_pie.add_annotation(
                     text=f"<b>{len(all_visitas)}</b><br>Visitas",
-                    x=0.5, y=0.5, font_size=16, showarrow=False, font_color="#E0E0E0"
+                    x=0.5, y=0.5, font_size=16, showarrow=False, font_color=COLOR_VERDE_OSCURO
                 )
                 st.plotly_chart(aplicar_estilo_plotly(fig_pie), use_container_width=True)
 
-        # --- GRÁFICA 2: EVOLUCIÓN MENSUAL LIMPIA CON PROMEDIO Y ETIQUETAS ---
+        # --- GRÁFICA 2: EVOLUCIÓN MENSUAL ---
         with col_g2:
             if not don_efectivas.empty:
                 st.markdown("#### Evolución Mensual del Recaudo ($)")
                 df_evol = don_efectivas.copy()
                 df_evol["fecha_donacion"] = pd.to_datetime(df_evol["fecha_donacion"])
-                # Filtrar fechas válidas (2024 en adelante) para evitar ejes distorsionados
                 df_evol = df_evol[df_evol["fecha_donacion"] >= "2024-01-01"]
                 
                 don_mensual = df_evol.resample("ME", on="fecha_donacion").agg(
@@ -483,16 +518,16 @@ with tab_graficas:
                     y=don_mensual["monto"],
                     mode="lines+markers",
                     name="Recaudo Mensual",
-                    line=dict(color="#238636", width=3),
-                    marker=dict(size=8, color="#3FB950"),
+                    line=dict(color=COLOR_VERDE_OSCURO, width=3),
+                    marker=dict(size=8, color=COLOR_AMBAR, line=dict(width=1.5, color=COLOR_VERDE_OSCURO)),
                     customdata=don_mensual["aportes"],
                     hovertemplate="<b>Mes: %{x}</b><br>Recaudo: $%{y:,.0f}<br>Aportes: %{customdata}<extra></extra>"
                 ))
                 fig_line.add_hline(
-                    y=prom_mensual, line_dash="dash", line_color="#F0883E",
+                    y=prom_mensual, line_dash="dash", line_color=COLOR_AMBAR,
                     annotation_text=f"Promedio mensual: ${prom_mensual:,.0f}",
                     annotation_position="top left",
-                    annotation_font_color="#F0883E"
+                    annotation_font_color="#B86E22"
                 )
                 fig_line.update_layout(xaxis_title="Mes", yaxis_title="Recaudo Total ($)", showlegend=False)
                 st.plotly_chart(aplicar_estilo_plotly(fig_line), use_container_width=True)
@@ -500,7 +535,7 @@ with tab_graficas:
         st.divider()
         col_g3, col_g4 = st.columns(2)
         
-        # --- GRÁFICA 3: SEGMENTACIÓN POR RANGOS DE DONACIÓN (CANTIDAD VS MONTO TOTAL) ---
+        # --- GRÁFICA 3: SEGMENTACIÓN POR RANGOS ---
         with col_g3:
             if not don_efectivas.empty:
                 st.markdown("#### Segmentación por Nivel de Aporte (Tiers)")
@@ -519,18 +554,19 @@ with tab_graficas:
                     text="Cantidad",
                     custom_data=["Total_Recaudado"],
                     color="Total_Recaudado",
-                    color_continuous_scale="Blues",
+                    color_continuous_scale=["#D8C3A5", COLOR_AMBAR, "#9E5814"],
                     labels={"Cantidad": "Nº de Donaciones", "Total_Recaudado": "Recaudado ($)"}
                 )
                 fig_tiers.update_traces(
                     textposition="outside",
+                    textfont_color=COLOR_VERDE_OSCURO,
                     hovertemplate="<b>Rango: %{x}</b><br>Nº Donaciones: %{y}<br>Total Recaudado: $%{customdata[0]:,.0f}<extra></extra>"
                 )
                 fig_tiers.update_layout(coloraxis_showscale=False, yaxis_title="Cantidad de Aportes")
                 st.plotly_chart(aplicar_estilo_plotly(fig_tiers), use_container_width=True)
                 st.caption(f"💡 Mientras el 50% de los aportes son ≤ **${ticket_mediana:,.0f}** (mediana), los aportes **+$15k** concentran la mayor parte del capital.")
 
-        # --- GRÁFICA 4: VISITAS POR PESTAÑA ORDENADAS CON VALORES EXACTOS ---
+        # --- GRÁFICA 4: VISITAS POR PESTAÑA ---
         with col_g4:
             if not all_visitas.empty:
                 st.markdown("#### Visitas por Pestaña de Origen (Excel)")
@@ -542,10 +578,12 @@ with tab_graficas:
                 fig_bar = px.bar(
                     origen_counts, x="Visitas", y="Origen", orientation="h",
                     text=origen_counts.apply(lambda r: f"{r['Visitas']} ({r['Pct']}%)", axis=1),
-                    color="Visitas", color_continuous_scale="Tealgrn"
+                    color="Visitas", 
+                    color_continuous_scale=["#A3B19E", COLOR_VERDE_MEDIO, COLOR_VERDE_OSCURO]
                 )
                 fig_bar.update_traces(
                     textposition="outside",
+                    textfont_color=COLOR_VERDE_OSCURO,
                     hovertemplate="<b>%{y}</b><br>Visitas: %{x}<extra></extra>"
                 )
                 fig_bar.update_layout(
@@ -553,6 +591,58 @@ with tab_graficas:
                     xaxis=dict(range=[0, origen_counts["Visitas"].max() * 1.25])
                 )
                 st.plotly_chart(aplicar_estilo_plotly(fig_bar), use_container_width=True)
+
+        # --- GRÁFICA 5: DIAGRAMA DE CAJA (BOXPLOT) DE DONACIONES ---
+        st.divider()
+        if not don_efectivas.empty:
+            st.markdown("#### Diagrama de Caja: Dispersión y Valores Atípicos de Donaciones")
+            col_ctrl1, col_ctrl2 = st.columns(2)
+            with col_ctrl1:
+                agrupar_box = st.radio(
+                    "Agrupar distribución por:",
+                    ["Año", "Pestaña de Origen", "Global"],
+                    horizontal=True,
+                    key="box_group"
+                )
+            with col_ctrl2:
+                escala_log = st.checkbox(
+                    "Usar escala logarítmica (recomendado para visualizar cuartiles y outliers)",
+                    value=True,
+                    key="box_log"
+                )
+
+            df_box = don_efectivas.copy()
+            df_box["Año"] = pd.to_datetime(df_box["fecha_donacion"]).dt.year.astype(str)
+            df_box = df_box.sort_values("Año")
+
+            if agrupar_box == "Año":
+                x_col = "Año"
+            elif agrupar_box == "Pestaña de Origen":
+                x_col = "origen"
+            else:
+                df_box["Global"] = "Todas las Donaciones"
+                x_col = "Global"
+
+            fig_box = px.box(
+                df_box,
+                x=x_col,
+                y="monto",
+                color=x_col,
+                points="outliers",
+                hover_data={"donante": True, "fecha_donacion": True, "monto": ":$,.2f"},
+                color_discrete_sequence=[COLOR_VERDE_OSCURO, COLOR_AMBAR, COLOR_VERDE_MEDIO, "#9E5814"],
+                labels={x_col: agrupar_box, "monto": "Monto de Donación ($)", "donante": "Donante", "fecha_donacion": "Fecha"}
+            )
+            fig_box.update_traces(
+                boxmean=True,
+                marker=dict(size=7, opacity=0.85, line=dict(width=1, color=COLOR_VERDE_OSCURO))
+            )
+            fig_box.update_layout(
+                showlegend=False,
+                yaxis_type="log" if escala_log else "linear",
+                yaxis_title="Monto Donado ($)"
+            )
+            st.plotly_chart(aplicar_estilo_plotly(fig_box), use_container_width=True)
     else:
         st.info("Carga un archivo Excel para activar los tableros interactivos.")
 
